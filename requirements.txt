@@ -1,0 +1,33 @@
+# D:\jan-contract\requirements.txt
+
+# Core LangChain libraries
+langchain-core
+langchain
+langchain-community
+langgraph
+
+# LLM Integrations
+langchain_google_genai
+langchain-groq
+
+# Tooling
+tavily-python
+pypdf
+pymupdf
+fastembed
+faiss-cpu
+python-multipart
+# Web Frameworks
+fastapi
+uvicorn
+streamlit
+
+# Utilities
+python-dotenv
+pydantic
+fpdf2
+
+# --- NEW: For Video Recording ---
+streamlit-webrtc
+opencv-python-headless
+av
