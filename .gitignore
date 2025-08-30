@@ -1,3 +1,5 @@
+# D:\jan-contract\.gitignore
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.pyc
@@ -10,3 +12,19 @@ venv/
 
 # IDE
 .vscode/
+
+# --- NEW: Files and Folders to Ignore ---
+
+# Ignore user-uploaded content directories
+pdfs_demystify/
+video_consents/
+
+# Ignore temporary test files
+# Using wildcards (*) to catch all of them
+test_*.py
+minimal_*.py
+simple_*.py
+run_app.py # Assuming this is a local runner, not part of the final project
+
+# You can also ignore specific files
+# TROUBLESHOOTING.md # Uncomment this line if you DON'T want to save this file
