@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jan-Contract | AI Legal Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-scale-balanced"></i>
+                <span>Jan-Contract</span>
+            </div>
+            
+            <ul class="nav-links">
+                <li class="active" data-tab="contract">
+                    <i class="fa-solid fa-file-signature"></i>
+                    <span>Contract Generator</span>
+                </li>
+                <li data-tab="schemes">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                    <span>Scheme Finder</span>
+                </li>
+                <li data-tab="demystifier">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    <span>Document Analyzer</span>
+                </li>
+                <li data-tab="assistant">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>AI Assistant</span>
+                </li>
+            </ul>
+
+            <div class="footer">
+                <p>Powered by Gemini AI</p>
+                <div class="status-indicator">
+                    <div class="dot"></div> System Online
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Contract Generator Section -->
+            <section id="contract" class="active-section">
+                <div class="header-hero">
+                    <h1>Create Digital Agreements</h1>
+                    <p>Draft professional contracts instantly with AI. Just describe what you need.</p>
+                </div>
+
+                <div class="split-view">
+                    <div class="input-card glass-panel">
+                        <h3><i class="fa-regular fa-comment-dots"></i> Describe Agreement</h3>
+                        <textarea id="contract-input" placeholder="E.g., I, Rajesh, agree to hire Suresh as a driver for 6 months at Rs. 15,000 per month..."></textarea>
+                        <button id="btn-generate-contract" class="primary-btn">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Contract
+                        </button>
+                    </div>
+
+                    <div class="output-card glass-panel hidden" id="contract-result">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-file-contract"></i> Drafted Contract</h3>
+                            <button id="btn-download-pdf" class="icon-btn" title="Download PDF"><i class="fa-solid fa-download"></i></button>
+                        </div>
+                        <div class="markdown-preview" id="contract-text"></div>
+                        
+                        <div class="trivia-box hidden" id="contract-trivia">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Legal Insights</h4>
+                            <div id="trivia-content"></div>
+                        </div>
+
+                        <!-- Video Consent Placeholder -->
+                        <div class="video-consent-area">
+                            <h4><i class="fa-solid fa-video"></i> Video Consent</h4>
+                            <p>Record a video stating your name and agreement to the terms.</p>
+                            <button class="secondary-btn"><i class="fa-solid fa-camera"></i> Record Video (Coming Soon)</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scheme Finder Section -->
+            <section id="schemes" class="hidden-section">
+                <div class="header-hero">
+                    <h1>Government Schemes</h1>
+                    <p>Find financial aid and benefits tailored to your profile.</p>
+                </div>
+
+                <div class="center-view">
+                    <div class="search-bar glass-panel">
+                        <input type="text" id="scheme-input" placeholder="Describe your profile (e.g., A 40-year-old female farmer in Punjab with 2 acres of land)">
+                        <button id="btn-find-schemes" class="search-btn"><i class="fa-solid fa-search"></i></button>
+                    </div>
+
+                    <div id="schemes-loader" class="loader hidden"></div>
+
+                    <div id="schemes-list" class="cards-grid">
+                        <!-- Schemes will be injected here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Demystifier Section -->
+            <section id="demystifier" class="hidden-section">
+                <div class="header-hero">
+                    <h1>Document Demystifier</h1>
+                    <p>Upload confusing legal documents and let AI explain them simply.</p>
+                </div>
+
+                <div class="upload-area glass-panel" id="drop-zone">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <h3>Drag & Drop PDF here</h3>
+                    <p>or click to browse</p>
+                    <input type="file" id="pdf-upload" accept="application/pdf" hidden>
+                </div>
+
+                <div id="analysis-view" class="hidden">
+                    <div class="analysis-grid">
+                        <div class="summary-card glass-panel">
+                            <h3><i class="fa-solid fa-list-check"></i> Summary</h3>
+                            <div id="doc-summary"></div>
+                        </div>
+                        
+                        <div class="terms-card glass-panel">
+                            <h3><i class="fa-solid fa-book-open"></i> Key Terms</h3>
+                            <div id="doc-terms"></div>
+                        </div>
+                    </div>
+
+                    <div class="chat-card glass-panel">
+                        <div class="chat-header">
+                            <h3><i class="fa-regular fa-comments"></i> Ask Questions</h3>
+                        </div>
+                        <div class="chat-messages" id="doc-chat-messages">
+                            <div class="message ai">
+                                <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                                <div class="bubble">I've analyzed your document. What would you like to know?</div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="doc-chat-input" placeholder="Ask a question about this file...">
+                            <button id="btn-doc-chat" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Assistant Section -->
+            <section id="assistant" class="hidden-section">
+                <div class="header-hero">
+                    <h1>General Legal Assistant</h1>
+                    <p>Ask anything about Indian law, rights, or procedures.</p>
+                </div>
+
+                <div class="chat-container glass-panel">
+                    <div class="chat-messages" id="general-chat-messages">
+                        <div class="message ai">
+                            <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                            <div class="bubble">Namaste! I am your AI legal assistant. How can I help you today?</div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="general-chat-input" placeholder="Type your question here...">
+                        <button id="btn-general-chat" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">Request Successful</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

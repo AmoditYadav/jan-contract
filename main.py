@@ -9,6 +9,7 @@ import datetime
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks, Depends
 from fastapi.responses import StreamingResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator
 import io
@@ -64,6 +65,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount Static Files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # =============================================================================
 # PYDANTIC MODELS FOR REQUEST/RESPONSE VALIDATION
@@ -656,28 +660,17 @@ async def get_contract_videos(contract_id: str):
 
 @app.get("/", tags=["System"])
 async def root():
-    """API root endpoint with comprehensive information"""
+    """Serve the Single Page Application"""
+    return FileResponse("static/index.html")
+
+@app.get("/api/info", tags=["System"])
+async def api_info():
+    """API information endpoint"""
     return {
         "message": "Jan-Contract Enhanced API",
         "version": "2.1.0",
         "description": "Comprehensive API for India's informal workforce",
-        "features": [
-            "Contract Generation",
-            "Scheme Discovery", 
-            "Document Analysis",
-            "AI Assistant",
-            "Media Processing"
-        ],
-        "endpoints": {
-            "health": "/health",
-            "contracts": "/api/v1/contracts/generate",
-            "schemes": "/api/v1/schemes/find",
-            "demystify": "/api/v1/demystify/upload",
-            "assistant": "/api/v1/assistant/chat",
-            "media": "/api/v1/media/upload-video"
-        },
-        "docs": "/docs",
-        "redoc": "/redoc"
+        "docs": "/docs"
     }
 
 # =============================================================================
