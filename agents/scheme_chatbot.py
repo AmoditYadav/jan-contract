@@ -1,17 +1,17 @@
 # D:\jan-contract\agents\scheme_chatbot.py
 
 import os
-from langchain.prompts import PromptTemplate
-from langchain.schema.runnable import RunnablePassthrough
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
 from pydantic import BaseModel, Field
 from langchain_core.output_parsers import PydanticOutputParser
 from typing import List
 
-# --- Tool and NEW Core Model Loader Imports ---
+# --- Tool and Core Model Loader Imports ---
 from tools.scheme_tools import scheme_search
 from core_utils.core_model_loaders import load_gemini_llm
 
-# --- Pydantic Models (No Changes) ---
+# --- Pydantic Models ---
 class GovernmentScheme(BaseModel):
     scheme_name: str = Field(description="The official name of the government scheme.")
     description: str = Field(description="A concise summary of the scheme's objectives and benefits.")
@@ -24,24 +24,33 @@ class SchemeOutput(BaseModel):
 # --- Setup Models and Parsers ---
 parser = PydanticOutputParser(pydantic_object=SchemeOutput)
 
-# --- Initialize the LLM by calling the backend-safe loader function ---
+# --- Initialize the LLM ---
 llm = load_gemini_llm()
 
-# --- Prompt Template (No Changes) ---
+# --- Prompt Template ---
 prompt = PromptTemplate(
     template="""
-    You are an expert assistant for Indian government schemes...
+    You are an expert assistant for Indian government schemes.
+    Find the most relevant official government schemes for the profile below.
+    Focus on accuracy and official sources.
+    
     User Profile: {user_profile}
     Web search results: {search_results}
+    
     {format_instructions}
     """,
     input_variables=["user_profile", "search_results"],
     partial_variables={"format_instructions": parser.get_format_instructions()},
 )
 
-# --- Build Chain (No Changes) ---
+# --- Build Chain ---
 def get_search_results(query: dict):
-    return scheme_search.invoke(query["user_profile"])
+    print(f"---NODE: Searching Schemes for profile: {query['user_profile']}---")
+    try:
+        return scheme_search.invoke(query["user_profile"])
+    except Exception as e:
+        print(f"Scheme search failed: {e}")
+        return "Search unavailable."
 
 scheme_chatbot = (
     {"search_results": get_search_results, "user_profile": RunnablePassthrough()}

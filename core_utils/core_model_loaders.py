@@ -14,8 +14,8 @@ def load_embedding_model():
 
 def load_groq_llm():
     """Loads the Groq LLM without any Streamlit dependencies."""
-    return ChatGroq(temperature=0, model="llama3-8b-8192", api_key=os.getenv("GROQ_API_KEY"))
+    return ChatGroq(temperature=0, model="meta-llama/llama-4-scout-17b-16e-instruct", api_key=os.getenv("GROQ_API_KEY"))
 
 def load_gemini_llm():
     """Loads the Gemini LLM without any Streamlit dependencies."""
-    return ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
+    return ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, max_retries=5)

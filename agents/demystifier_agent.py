@@ -6,16 +6,16 @@ from pydantic import BaseModel, Field
 
 # --- Core LangChain & Document Processing Imports ---
 from langchain_community.document_loaders import PyMuPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain.prompts import PromptTemplate
-from langchain.schema.runnable import RunnablePassthrough
-from langchain.schema.output_parser import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 
 # LangGraph Imports
 from langgraph.graph import StateGraph, END, START
 
-# --- Tool and NEW Core Model Loader Imports ---
+# --- Tool and Core Model Loader Imports ---
 from tools.legal_tools import legal_search
 from core_utils.core_model_loaders import load_groq_llm, load_embedding_model
 
@@ -24,7 +24,7 @@ from core_utils.core_model_loaders import load_groq_llm, load_embedding_model
 groq_llm = load_groq_llm()
 embedding_model = load_embedding_model()
 
-# --- Pydantic Models (No Changes) ---
+# --- Pydantic Models ---
 class ExplainedTerm(BaseModel):
     term: str = Field(description="The legal term or jargon identified.")
     explanation: str = Field(description="A simple, plain-English explanation of the term.")
@@ -35,7 +35,7 @@ class DemystifyReport(BaseModel):
     key_terms: List[ExplainedTerm] = Field(description="A list of the most important explained legal terms.")
     overall_advice: str = Field(description="A concluding sentence of general advice.")
 
-# --- 2. LangGraph for Document Analysis (No Changes) ---
+# --- 2. LangGraph for Document Analysis ---
 class DemystifyState(TypedDict):
     document_chunks: List[str]
     summary: str
@@ -45,43 +45,110 @@ class DemystifyState(TypedDict):
 def summarize_node(state: DemystifyState):
     """Takes all document chunks and creates a high-level summary."""
     print("---NODE (Demystify): Generating Summary---")
-    context = "\n\n".join(state["document_chunks"])
-    prompt = f"You are a paralegal expert... Document Content:\n{context}"
-    summary = groq_llm.invoke(prompt).content
+    chunks = state.get("document_chunks", [])
+    if not chunks:
+        return {"summary": "No content to summarize."}
+        
+    context = "\n\n".join(chunks)
+    prompt = f"You are a paralegal expert for the Indian legal system. Summarize the following document clearly for a layman:\n\n{context}"
+    try:
+        response = groq_llm.invoke(prompt)
+        summary = response.content if response and response.content else "Summary generation failed."
+    except Exception as e:
+        print(f"Summary generation error: {e}")
+        summary = "Summary generation failed due to an error."
+        
     return {"summary": summary}
 
 def identify_terms_node(state: DemystifyState):
     """Identifies the most critical and potentially confusing legal terms in the document."""
     print("---NODE (Demystify): Identifying Key Terms---")
-    context = "\n\n".join(state["document_chunks"])
-    prompt = f"Based on the following legal document, identify the 3-5 most critical legal terms... Document Content:\n{context}"
-    terms_string = groq_llm.invoke(prompt).content
-    identified_terms = [term.strip() for term in terms_string.split(',') if term.strip()]
-    return {"identified_terms": identified_terms}
+    try:
+        context = "\n\n".join(state.get("document_chunks", []))
+        if not context:
+            print("Warning: No document context found for term identification.")
+            return {"identified_terms": []}
+            
+        prompt = f"Identify the 3-5 most critical complex legal terms in the following document that a layman would not understand. Return only the terms separated by commas.\n\n{context}"
+        response = groq_llm.invoke(prompt)
+        
+        if not response or not response.content:
+            print("Warning: Empty response from LLM for term identification.")
+            return {"identified_terms": []}
+            
+        terms_string = response.content
+        identified_terms = [term.strip() for term in terms_string.split(',') if term.strip()]
+        return {"identified_terms": identified_terms}
+    except Exception as e:
+        print(f"Error in identify_terms_node: {e}")
+        return {"identified_terms": []}
 
 def generate_report_node(state: DemystifyState):
     """Combines the summary and terms into a final, structured report with enriched explanations."""
     print("---NODE (Demystify): Generating Final Report---")
     explained_terms_list = []
-    document_context = "\n\n".join(state["document_chunks"])
-    for term in state["identified_terms"]:
+    
+    # Handle None or empty document_chunks
+    chunks = state.get("document_chunks", [])
+    document_context = "\n\n".join(chunks) if chunks else ""
+    
+    # Handle None identified_terms
+    terms = state.get("identified_terms", [])
+    if terms is None:
+        terms = []
+        
+    for term in terms:
         print(f"  - Researching term: {term}")
-        search_results = legal_search.invoke(f"simple explanation of legal term '{term}' in Indian law")
-        prompt = f"""A user is reading a legal document that contains the term "{term}".
-        Overall document context is: {document_context[:2000]}
-        Web search results for "{term}" are: {search_results}
-        Format your response strictly as:
-        Explanation: [Your simple, one-sentence explanation here]
-        URL: [The best, full, working URL from the search results]"""
-        response = groq_llm.invoke(prompt).content
         try:
-            explanation = response.split("Explanation:")[1].split("URL:")[0].strip()
-            link = response.split("URL:")[-1].strip()
-        except IndexError:
-            explanation = "Could not generate a simple explanation for this term."
-            link = "No link found."
+            search_results = legal_search.invoke(f"simple explanation of legal term '{term}' in Indian law")
+        except Exception as e:
+            print(f"Search failed for term '{term}': {e}")
+            search_results = "Search unavailable."
+
+        prompt = f"""
+        A user is reading a legal document containing the term "{term}".
+        Context: {document_context[:2000]}...
+        Search Results: {search_results}
+        
+        Provide a simple one-sentence explanation and a valid URL if found.
+        Format:
+        Explanation: [Explanation]
+        URL: [URL]
+        """
+        try:
+            response = groq_llm.invoke(prompt)
+            if response and response.content:
+                content = response.content
+                try:
+                    if "Explanation:" in content and "URL:" in content:
+                        explanation = content.split("Explanation:")[1].split("URL:")[0].strip()
+                        link = content.split("URL:")[-1].strip()
+                    else:
+                        explanation = content.strip()
+                        link = "https://kanoon.nearlaw.com/"
+                except Exception:
+                    explanation = f"Legal term '{term}' identified."
+                    link = "https://kanoon.nearlaw.com/"
+            else:
+                 explanation = "Explanation unavailable."
+                 link = "https://kanoon.nearlaw.com/"
+        except Exception as e:
+            print(f"LLM failed for term '{term}': {e}")
+            explanation = "Explanation unavailable."
+            link = "https://kanoon.nearlaw.com/"
+            
         explained_terms_list.append(ExplainedTerm(term=term, explanation=explanation, resource_link=link))
-    final_report = DemystifyReport(summary=state["summary"], key_terms=explained_terms_list, overall_advice="This is an automated analysis. For critical matters, please consult with a qualified legal professional.")
+        
+    # Ensure summary is not None
+    summary_text = state.get("summary", "Summary unavailable.")
+    if summary_text is None:
+        summary_text = "Summary unavailable."
+
+    final_report = DemystifyReport(
+        summary=summary_text, 
+        key_terms=explained_terms_list, 
+        overall_advice="This AI analysis is for informational purposes only. Consult a lawyer for binding advice."
+    )
     return {"final_report": final_report}
 
 # Compile the analysis graph
@@ -95,29 +162,42 @@ graph_builder.add_edge("identify_terms", "generate_report")
 graph_builder.add_edge("generate_report", END)
 demystifier_agent_graph = graph_builder.compile()
 
-# --- 3. Helper Function to Create the RAG Chain (No Changes) ---
+# --- 3. Helper Function to Create the RAG Chain ---
 def create_rag_chain(retriever):
     """Creates the Q&A chain for the interactive chat."""
-    prompt_template = """You are a helpful assistant... CONTEXT: {context} QUESTION: {question} ANSWER:"""
+    prompt_template = """You are a helpful legal assistant. Answer based on the context only.
+    CONTEXT: {context} 
+    QUESTION: {question} 
+    ANSWER:"""
     prompt = PromptTemplate.from_template(prompt_template)
     rag_chain = ({"context": retriever, "question": RunnablePassthrough()} | prompt | groq_llm | StrOutputParser())
     return rag_chain
 
-# --- 4. The Master "Controller" Function (No Changes) ---
+# --- 4. The Master "Controller" Function ---
 def process_document_for_demystification(file_path: str):
     """Loads a PDF, runs the full analysis, creates a RAG chain, and returns both."""
     print(f"--- Processing document: {file_path} ---")
+    
     loader = PyMuPDFLoader(file_path)
     documents = loader.load()
+    
+    if not documents:
+        raise ValueError("No content found in PDF.")
+
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     chunks = splitter.split_documents(documents)
+    
     print("--- Creating FAISS vector store for Q&A ---")
     vectorstore = FAISS.from_documents(chunks, embedding=embedding_model)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     rag_chain = create_rag_chain(retriever)
+    
     print("--- Running analysis graph for the report ---")
     chunk_contents = [chunk.page_content for chunk in chunks]
-    graph_input = {"document_chunks": chunk_contents}
+    # Limit context to avoid token limits if document is huge
+    graph_input = {"document_chunks": chunk_contents[:10]} 
+    
     result = demystifier_agent_graph.invoke(graph_input)
     report = result.get("final_report")
+    
     return {"report": report, "rag_chain": rag_chain}
