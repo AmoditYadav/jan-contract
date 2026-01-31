@@ -18,4 +18,9 @@ def load_groq_llm():
 
 def load_gemini_llm():
     """Loads the Gemini LLM without any Streamlit dependencies."""
-    return ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, max_retries=5)
+    return ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash", 
+        temperature=0, 
+        max_retries=5,
+        google_api_key=os.getenv("GOOGLE_API_KEY")
+    )
