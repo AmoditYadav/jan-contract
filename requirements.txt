@@ -4,8 +4,6 @@ langchain>=0.2.0
 langchain-community>=0.2.0
 langgraph>=0.2.0
 langchain-text-splitters>=0.2.0
-
-# LLM Integrations
 langchain_google_genai>=0.1.0
 langchain-groq>=0.1.0
 google-generativeai>=0.8.0
@@ -13,16 +11,12 @@ google-generativeai>=0.8.0
 # Tooling
 tavily-python>=0.4.0
 pypdf>=4.0.0
-pymupdf>=1.24.0
-fastembed>=0.2.0
 faiss-cpu>=1.7.0
 python-multipart>=0.0.6
 
 # Web Frameworks
 fastapi>=0.104.0
 uvicorn>=0.24.0
-requests>=2.31.0
-streamlit>=1.28.0
 
 # Utilities
 python-dotenv>=1.0.0

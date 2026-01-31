@@ -5,9 +5,16 @@ from google import genai
 from google.genai import types
 
 # Configure the API key from the .env file
+# Configure the API key from the .env file
 try:
-    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-    model_name = "gemini-2.0-flash-exp" # Using the user's preferred model
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if api_key:
+        client = genai.Client(api_key=api_key)
+        model_name = "gemini-2.0-flash-exp"
+    else:
+        print("CRITICAL WARNING: GOOGLE_API_KEY missing in general_assistant_agent.")
+        client = None
+        model_name = None
 except Exception as e:
     print(f"Error configuring Google Gen AI Client: {e}")
     client = None
