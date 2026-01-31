@@ -6,7 +6,11 @@ from langchain.tools import tool
 from langchain_community.tools.tavily_search import TavilySearchResults
 
 load_dotenv()
-os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
+
+# Safely set environment variable only if it exists
+tavily_key = os.getenv("TAVILY_API_KEY")
+if tavily_key:
+    os.environ["TAVILY_API_KEY"] = tavily_key
 
 @tool
 def legal_search(query: str):
