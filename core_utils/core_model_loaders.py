@@ -17,10 +17,10 @@ def load_groq_llm():
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         print("CRITICAL WARNING: GROQ_API_KEY is missing. Scheme finder will fail.")
-        class DummyLLM:
-            def invoke(self, *args, **kwargs):
-                raise ValueError("GROQ_API_KEY is missing. Please check your environment variables.")
-        return DummyLLM()
+        from langchain_core.runnables import RunnableLambda
+        def fail_on_invoke(input):
+            raise ValueError("GROQ_API_KEY is missing. Please check your environment variables.")
+        return RunnableLambda(fail_on_invoke)
         
     return ChatGroq(
         temperature=0, 
@@ -33,11 +33,10 @@ def load_gemini_llm():
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         print("CRITICAL WARNING: GOOGLE_API_KEY is missing. AI features will fail.")
-        # Return a dummy callable that fails gracefully at runtime, not logic load time
-        class DummyLLM:
-            def invoke(self, *args, **kwargs):
-                raise ValueError("GOOGLE_API_KEY is missing. Please check your environment variables.")
-        return DummyLLM()
+        from langchain_core.runnables import RunnableLambda
+        def fail_on_invoke(input):
+            raise ValueError("GOOGLE_API_KEY is missing. Please check your environment variables.")
+        return RunnableLambda(fail_on_invoke)
         
     return ChatGoogleGenerativeAI(
         model="gemini-2.5-flash", 
