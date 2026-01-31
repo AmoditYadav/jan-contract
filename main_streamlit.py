@@ -8,26 +8,28 @@ load_dotenv()
 st.set_page_config(layout="wide", page_title="Jan-Contract Unified Assistant", page_icon="⚖️")
 
 # Backend Configuration
-default_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+# Default to the production Railway URL
+PRODUCTION_URL = "https://jan-contract-production.up.railway.app"
+default_url = os.getenv("BACKEND_URL", PRODUCTION_URL)
 
 with st.sidebar:
-    st.header("⚙️ Configuration")
-    BACKEND_URL = st.text_input(
-        "Backend API URL", 
-        value=default_url,
-        help="Paste your Vercel/Railway deployment URL here (e.g., https://your-project.vercel.app)"
-    )
-    
-    # Test Connection
-    if st.button("Test Connection"):
-        try:
-            resp = requests.get(f"{BACKEND_URL}/health", timeout=5)
-            if resp.status_code == 200:
-                st.success("✅ Connected!")
-            else:
-                st.error(f"❌ Error: {resp.status_code}")
-        except Exception as e:
-            st.error(f"❌ Failed: {e}")
+    with st.expander("⚙️ Connection Settings"):
+        BACKEND_URL = st.text_input(
+            "Backend API URL", 
+            value=default_url,
+            help="URL of the deployed Jan-Contract API"
+        )
+        
+        # Test Connection
+        if st.button("Test Connection"):
+            try:
+                resp = requests.get(f"{BACKEND_URL}/health", timeout=10)
+                if resp.status_code == 200:
+                    st.success("✅ Connected!")
+                else:
+                    st.error(f"❌ Error: {resp.status_code}")
+            except Exception as e:
+                st.error(f"❌ Failed: {e}")
 
 # Only strip trailing slash if it exists
 if BACKEND_URL.endswith("/"):
