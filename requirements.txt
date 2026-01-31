@@ -1,5 +1,3 @@
-# D:\jan-contract\requirements.txt
-
 # Core LangChain libraries
 langchain-core>=0.2.0
 langchain>=0.2.0
@@ -23,21 +21,9 @@ python-multipart>=0.0.6
 # Web Frameworks
 fastapi>=0.104.0
 uvicorn>=0.24.0
-streamlit>=1.28.0
-
-# Video and Audio Processing
-streamlit-webrtc>=0.63.4
-opencv-python>=4.8.0
-av>=14.0.0
-SpeechRecognition>=3.10.0
-gTTS>=2.4.0
-PyAudio>=0.2.11
 
 # Utilities
 python-dotenv>=1.0.0
 pydantic>=2.5.0
 fpdf2>=2.7.0
 numpy>=1.24.0
-
-# Additional dependencies for better audio/video handling
-# Note: webrtc-streamer is not needed as streamlit-webrtc handles this
